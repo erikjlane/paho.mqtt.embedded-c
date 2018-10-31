@@ -323,7 +323,7 @@ void test1_sendAndReceive(MQTTClient* c, int qos, char* test_topic)
 	{
     test1_message_data = NULL;
 		rc = MQTTPublish(c, test_topic, &pubmsg);
-		assert("Good rc from publish", rc == SUCCESS, "rc was %d", rc);
+		assert("Good rc from publish", rc == OK, "rc was %d", rc);
 
     /* wait for the message to be received */
     wait_seconds = 10;
@@ -384,12 +384,12 @@ int test1(struct Options options)
 
 	MyLog(LOGA_DEBUG, "Connecting");
   rc = MQTTConnect(&c, &data);
-	assert("Good rc from connect", rc == SUCCESS, "rc was %d", rc);
-	if (rc != SUCCESS)
+	assert("Good rc from connect", rc == OK, "rc was %d", rc);
+	if (rc != OK)
 		goto exit;
 
 	rc = MQTTSubscribe(&c, test_topic, subsqos, messageArrived);
-	assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+	assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
 
 	test1_sendAndReceive(&c, 0, test_topic);
 	test1_sendAndReceive(&c, 1, test_topic);
@@ -398,16 +398,16 @@ int test1(struct Options options)
 	MyLog(LOGA_DEBUG, "Stopping\n");
 
 	rc = MQTTUnsubscribe(&c, test_topic);
-	assert("Unsubscribe successful", rc == SUCCESS, "rc was %d", rc);
+	assert("Unsubscribe successful", rc == OK, "rc was %d", rc);
 	rc = MQTTDisconnect(&c);
-	assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+	assert("Disconnect successful", rc == OK, "rc was %d", rc);
 
 	/* Just to make sure we can connect again */
   NetworkConnect(&n, options.host, options.port);
   rc = MQTTConnect(&c, &data);
-	assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+	assert("Connect successful",  rc == OK, "rc was %d", rc);
 	rc = MQTTDisconnect(&c);
-	assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+	assert("Disconnect successful", rc == OK, "rc was %d", rc);
 
 exit:
 	MyLog(LOGA_INFO, "TEST1: test %s. %d tests run, %d failures.",
@@ -463,19 +463,19 @@ int test2(struct Options options)
 
 	MyLog(LOGA_DEBUG, "Connecting");
   rc = MQTTConnect(&c, &data);
-	assert("Good rc from connect", rc == SUCCESS, "rc was %d", rc);
-	if (rc != SUCCESS)
+	assert("Good rc from connect", rc == OK, "rc was %d", rc);
+	if (rc != OK)
 		goto exit;
 
 	rc = MQTTDisconnect(&c);
-	assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+	assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
   /* now connect cleansession false */
   NetworkConnect(&n, options.host, options.port);
   data.cleansession = 0;
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Good rc from connect", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from connect", rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 0", connack.sessionPresent == 0,
@@ -483,39 +483,39 @@ int test2(struct Options options)
 
   /* set up some state */
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Good granted QoS", suback.grantedQoS == subsqos,
          "granted QoS was %d", suback.grantedQoS);
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
 	/* Connect and check sessionPresent */
   NetworkConnect(&n, options.host, options.port);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-	assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+	assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 1", connack.sessionPresent == 1,
            "sessionPresent was %d", connack.sessionPresent);
 
 	rc = MQTTDisconnect(&c);
-	assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+	assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
   /* Connect and check sessionPresent is cleared */
   data.cleansession = 1;
   NetworkConnect(&n, options.host, options.port);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 0", connack.sessionPresent == 0,
            "sessionPresent was %d", connack.sessionPresent);
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
 exit:
@@ -560,7 +560,7 @@ int check_subs_exist(MQTTClient* c, const char* test_topic, int which)
 
     test1_message_data = test2_message_data = NULL;
     rc = MQTTPublish(c, test_topic, &pubmsg);
-    assert("Good rc from publish", rc == SUCCESS, "rc was %d", rc);
+    assert("Good rc from publish", rc == OK, "rc was %d", rc);
 
     /* wait for the message to be received */
     wait_seconds = 10;
@@ -570,12 +570,12 @@ int check_subs_exist(MQTTClient* c, const char* test_topic, int which)
     }
 
     rc = (((which == 1 || which == 3) && test1_message_data) ||
-         (which == 2 && test1_message_data == NULL)) ? SUCCESS : FAILURE;
-    assert("test1 subscription", rc == SUCCESS, "test1_message_data %p\n",
+         (which == 2 && test1_message_data == NULL)) ? OK : FAILURE;
+    assert("test1 subscription", rc == OK, "test1_message_data %p\n",
             test1_message_data);
     rc = (((which == 2 || which == 3) && test2_message_data) ||
-         (which == 1 && test2_message_data == NULL)) ? SUCCESS : FAILURE;
-    assert("test2 subscription", rc == SUCCESS, "test2_message_data %p\n",
+         (which == 1 && test2_message_data == NULL)) ? OK : FAILURE;
+    assert("test2 subscription", rc == OK, "test2_message_data %p\n",
              test2_message_data);
     return rc;
 }
@@ -622,13 +622,13 @@ int test3(struct Options options)
 
   MyLog(LOGA_DEBUG, "Connecting");
   rc = NetworkConnect(&n, options.host, options.port);
-  assert("Good rc from TCP connect", rc == SUCCESS, "rc was %d", rc);
-  if (rc != SUCCESS)
+  assert("Good rc from TCP connect", rc == OK, "rc was %d", rc);
+  if (rc != OK)
     goto exit;
 
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Good rc from connect", rc == SUCCESS, "rc was %d", rc);
-  if (rc != SUCCESS)
+  assert("Good rc from connect", rc == OK, "rc was %d", rc);
+  if (rc != OK)
     goto exit;
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
@@ -639,44 +639,44 @@ int test3(struct Options options)
                 "isconnected was %d", MQTTIsConnected(&c));
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
   /* reconnect with cleansession false */
   data.cleansession = 0;
   rc = NetworkConnect(&n, options.proxy_host, options.proxy_port);
-  assert("TCP connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("TCP connect successful",  rc == OK, "rc was %d", rc);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 0", connack.sessionPresent == 0,
            "sessionPresent was %d", connack.sessionPresent);
 
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Granted QoS rc from subscribe", suback.grantedQoS == QOS2,
          "rc was %d", suback.grantedQoS);
 
   check_subs_exist(&c, test_topic, 1);
 
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived2, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Granted QoS rc from subscribe", suback.grantedQoS == QOS2,
                   "rc was %d", suback.grantedQoS);
 
   check_subs_exist(&c, test_topic, 2);
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
   /* reconnect with cleansession false */
   data.cleansession = 0;
   rc = NetworkConnect(&n, options.proxy_host, options.proxy_port);
-  assert("TCP connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("TCP connect successful",  rc == OK, "rc was %d", rc);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 1", connack.sessionPresent == 1,
@@ -685,7 +685,7 @@ int test3(struct Options options)
   check_subs_exist(&c, test_topic, 2);
 
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Granted QoS rc from subscribe", suback.grantedQoS == QOS2,
             "rc was %d", suback.grantedQoS);
 
@@ -699,7 +699,7 @@ int test3(struct Options options)
   pubmsg.retained = 0;
   pubmsg.dup = 0;
   rc = MQTTPublish(&c, "MQTTSAS topic", &pubmsg);
-  assert("Good rc from publish", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from publish", rc == OK, "rc was %d", rc);
 
   // wait for failure to be noticed by keepalive
   wait_seconds = 20;
@@ -714,9 +714,9 @@ int test3(struct Options options)
   /* reconnect with cleansession false */
   data.cleansession = 0;
   rc = NetworkConnect(&n, options.host, options.port);
-  assert("TCP connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("TCP connect successful",  rc == OK, "rc was %d", rc);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 1", connack.sessionPresent == 1,
@@ -725,36 +725,36 @@ int test3(struct Options options)
   check_subs_exist(&c, test_topic, 1);
 
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived2, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Granted QoS rc from subscribe", suback.grantedQoS == QOS2,
                   "rc was %d", suback.grantedQoS);
 
   check_subs_exist(&c, test_topic, 2);
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
   /* reconnect with cleansession true to clean up both server and client state */
   data.cleansession = 1;
   rc = NetworkConnect(&n, options.host, options.port);
-  assert("TCP connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("TCP connect successful",  rc == OK, "rc was %d", rc);
   rc = MQTTConnectWithResults(&c, &data, &connack);
-  assert("Connect successful",  rc == SUCCESS, "rc was %d", rc);
+  assert("Connect successful",  rc == OK, "rc was %d", rc);
 
   assert("Good rc in connack", connack.rc == 0, "rc was %d", connack.rc);
   assert("Session present is 0", connack.sessionPresent == 0,
            "sessionPresent was %d", connack.sessionPresent);
 
   rc = MQTTSubscribeWithResults(&c, test_topic, subsqos, messageArrived2, &suback);
-  assert("Good rc from subscribe", rc == SUCCESS, "rc was %d", rc);
+  assert("Good rc from subscribe", rc == OK, "rc was %d", rc);
   assert("Granted QoS rc from subscribe", suback.grantedQoS == QOS2,
                   "rc was %d", suback.grantedQoS);
 
   check_subs_exist(&c, test_topic, 2);
 
   rc = MQTTDisconnect(&c);
-  assert("Disconnect successful", rc == SUCCESS, "rc was %d", rc);
+  assert("Disconnect successful", rc == OK, "rc was %d", rc);
   NetworkDisconnect(&n);
 
 exit:
@@ -832,42 +832,42 @@ int test6(struct Options options)
 
 	/* Client-1 with Will options */
 	rc = MQTTClient_create(&test6_c1, options.proxy_connection, "Client_1", MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
-	assert("good rc from create", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from create", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	rc = MQTTClient_setCallbacks(test6_c1, (void*)test6_c1, test6_connectionLost, test6_messageArrived, test6_deliveryComplete);
-	assert("good rc from setCallbacks",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from setCallbacks",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	/* Connect to the broker */
 	rc = MQTTClient_connect(test6_c1, &opts);
-	assert("good rc from connect",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from connect",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	/* Client - 2 (multi-threaded) */
 	rc = MQTTClient_create(&test6_c2, options.connection, "Client_2", MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
-	assert("good rc from create",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("good rc from create",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* Set the callback functions for the client */
 	rc = MQTTClient_setCallbacks(test6_c2, (void*)test6_c2, test6_connectionLost, test6_messageArrived, test6_deliveryComplete);
-	assert("good rc from setCallbacks",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("good rc from setCallbacks",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* Connect to the broker */
 	opts2.keepAliveInterval = 20;
 	opts2.cleansession = 1;
 	MyLog(LOGA_INFO, "Connecting Client_2 ...");
 	rc = MQTTClient_connect(test6_c2, &opts2);
-	assert("Good rc from connect", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from connect", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	rc = MQTTClient_subscribe(test6_c2, test6_will_topic, 2);
-	assert("Good rc from subscribe", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from subscribe", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* now send the command which will break the connection and cause the will message to be sent */
 	rc = MQTTClient_publish(test6_c1, mqttsas_topic, (int)strlen("TERMINATE"), "TERMINATE", 0, 0, NULL);
-	assert("Good rc from publish", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from publish", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	MyLog(LOGA_INFO, "Waiting to receive the will message");
 	count = 0;
@@ -887,7 +887,7 @@ int test6(struct Options options)
 			         "connection_lost_called %d\n", test6_connection_lost_called);
 
 	rc = MQTTClient_unsubscribe(test6_c2, test6_will_topic);
-	assert("Good rc from unsubscribe", rc == MQTTCLIENT_SUCCESS, "rc was %d", rc);
+	assert("Good rc from unsubscribe", rc == MQTTCLIENT_OK, "rc was %d", rc);
 
 	rc = MQTTClient_isConnected(test6_c2);
 	assert("Client-2 still connected", rc == 1, "isconnected is %d", rc);
@@ -896,7 +896,7 @@ int test6(struct Options options)
 	assert("Client-1 not connected", rc == 0, "isconnected is %d", rc);
 
 	rc = MQTTClient_disconnect(test6_c2, 100L);
-	assert("Good rc from disconnect", rc == MQTTCLIENT_SUCCESS, "rc was %d", rc);
+	assert("Good rc from disconnect", rc == MQTTCLIENT_OK, "rc was %d", rc);
 
 	MQTTClient_destroy(&test6_c1);
 	MQTTClient_destroy(&test6_c2);
@@ -940,42 +940,42 @@ int test6a(struct Options options)
 
 	/* Client-1 with Will options */
 	rc = MQTTClient_create(&test6_c1, options.proxy_connection, "Client_1", MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
-	assert("good rc from create", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from create", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	rc = MQTTClient_setCallbacks(test6_c1, (void*)test6_c1, test6_connectionLost, test6_messageArrived, test6_deliveryComplete);
-	assert("good rc from setCallbacks",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from setCallbacks",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	/* Connect to the broker */
 	rc = MQTTClient_connect(test6_c1, &opts);
-	assert("good rc from connect",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
-	if (rc != MQTTCLIENT_SUCCESS)
+	assert("good rc from connect",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
+	if (rc != MQTTCLIENT_OK)
 		goto exit;
 
 	/* Client - 2 (multi-threaded) */
 	rc = MQTTClient_create(&test6_c2, options.connection, "Client_2", MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
-	assert("good rc from create",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("good rc from create",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* Set the callback functions for the client */
 	rc = MQTTClient_setCallbacks(test6_c2, (void*)test6_c2, test6_connectionLost, test6_messageArrived, test6_deliveryComplete);
-	assert("good rc from setCallbacks",  rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("good rc from setCallbacks",  rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* Connect to the broker */
 	opts2.keepAliveInterval = 20;
 	opts2.cleansession = 1;
 	MyLog(LOGA_INFO, "Connecting Client_2 ...");
 	rc = MQTTClient_connect(test6_c2, &opts2);
-	assert("Good rc from connect", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from connect", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	rc = MQTTClient_subscribe(test6_c2, test6_will_topic, 2);
-	assert("Good rc from subscribe", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from subscribe", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	/* now send the command which will break the connection and cause the will message to be sent */
 	rc = MQTTClient_publish(test6_c1, mqttsas_topic, (int)strlen("TERMINATE"), "TERMINATE", 0, 0, NULL);
-	assert("Good rc from publish", rc == MQTTCLIENT_SUCCESS, "rc was %d\n", rc);
+	assert("Good rc from publish", rc == MQTTCLIENT_OK, "rc was %d\n", rc);
 
 	MyLog(LOGA_INFO, "Waiting to receive the will message");
 	count = 0;
@@ -995,7 +995,7 @@ int test6a(struct Options options)
 			         "connection_lost_called %d\n", test6_connection_lost_called);
 
 	rc = MQTTClient_unsubscribe(test6_c2, test6_will_topic);
-	assert("Good rc from unsubscribe", rc == MQTTCLIENT_SUCCESS, "rc was %d", rc);
+	assert("Good rc from unsubscribe", rc == MQTTCLIENT_OK, "rc was %d", rc);
 
 	rc = MQTTClient_isConnected(test6_c2);
 	assert("Client-2 still connected", rc == 1, "isconnected is %d", rc);
@@ -1004,7 +1004,7 @@ int test6a(struct Options options)
 	assert("Client-1 not connected", rc == 0, "isconnected is %d", rc);
 
 	rc = MQTTClient_disconnect(test6_c2, 100L);
-	assert("Good rc from disconnect", rc == MQTTCLIENT_SUCCESS, "rc was %d", rc);
+	assert("Good rc from disconnect", rc == MQTTCLIENT_OK, "rc was %d", rc);
 
 	MQTTClient_destroy(&test6_c1);
 	MQTTClient_destroy(&test6_c2);
