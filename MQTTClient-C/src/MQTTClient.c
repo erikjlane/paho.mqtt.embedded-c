@@ -124,19 +124,30 @@ static int readPacket(MQTTClient* c, Timer* timer)
     decodePacket(c, &rem_len, TimerLeftMS(timer));
     len += MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
 
+    header.byte = c->readbuf[0];
+
     if (rem_len > (c->readbuf_size - len))
     {
-        rc = BUFFER_OVERFLOW;
-        goto exit;
+        // Publish messages can be longer than the receive buffer.
+        if (header.bits.type == PUBLISH) {
+            rem_len = c->readbuf_size - len;
+        } else {
+            rc = BUFFER_OVERFLOW;
+            goto exit;
+        }
     }
 
     /* 3. read the rest of the buffer using a callback to supply the rest of the data */
-    if (rem_len > 0 && (rc = c->ipstack->mqttread(c->ipstack, c->readbuf + len, rem_len, TimerLeftMS(timer)) != rem_len)) {
-        rc = 0;
-        goto exit;
+    if (rem_len > 0) {
+        rc = c->ipstack->mqttread(c->ipstack, c->readbuf + len, rem_len, TimerLeftMS(timer));
+        if (rc != rem_len) {
+            if (PUBLISH != header.bits.type || rc != c->readbuf_size - len) {
+                rc = 0;
+                goto exit;
+            }
+        }
     }
 
-    header.byte = c->readbuf[0];
     rc = header.bits.type;
     if (c->keepAliveInterval > 0)
         TimerCountdown(&c->last_received, c->keepAliveInterval); // record the fact that we have successfully received a packet
@@ -206,6 +217,29 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
     }
 
     return rc;
+}
+
+int deliverStreamingMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message, Timer *timer) {
+    int missing_bytes = (message->payload + message->payloadlen) - (void *)(c->readbuf + c->readbuf_size);
+    int rc = deliverMessage(c, topicName, message);
+    if (rc != OK) {
+        return rc;
+    }
+
+    while (missing_bytes > 0) {
+        // can't use the entire readbuf because the topic string still points inside.
+        int buffer_size = (void *)(c->readbuf + c->readbuf_size) - message->payload;
+        int size_to_read = buffer_size < missing_bytes ? buffer_size : missing_bytes;
+        rc = c->ipstack->mqttread(c->ipstack, message->payload, size_to_read, TimerLeftMS(timer));
+        message->payloadlen = rc;
+        missing_bytes -= rc;
+        rc = deliverMessage(c, topicName, message);
+        if (rc != OK) {
+            return rc;
+        }
+    }
+
+    return OK;
 }
 
 
@@ -284,7 +318,7 @@ int cycle(MQTTClient* c, Timer* timer)
                (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
                 goto exit;
             msg.qos = (enum QoS)intQoS;
-            deliverMessage(c, &topicName, &msg);
+            deliverStreamingMessage(c, &topicName, &msg, timer);
             if (msg.qos != QOS0)
             {
                 if (msg.qos == QOS1)
