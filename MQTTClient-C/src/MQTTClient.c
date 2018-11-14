@@ -221,6 +221,7 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
 
 int deliverStreamingMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message, Timer *timer) {
     int missing_bytes = (message->payload + message->payloadlen) - (void *)(c->readbuf + c->readbuf_size);
+    message->payloadlen -= missing_bytes;
     int rc = deliverMessage(c, topicName, message);
     if (rc != OK) {
         return rc;
