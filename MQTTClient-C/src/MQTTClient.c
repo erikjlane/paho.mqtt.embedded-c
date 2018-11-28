@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 
-static void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessage) {
+static void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessage, bool last) {
     md->topicName = aTopicName;
     md->message = aMessage;
+    md->last = last;
 }
 
 
@@ -187,7 +188,7 @@ static char isTopicMatched(char* topicFilter, MQTTString* topicName)
 }
 
 
-int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
+int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message, bool last)
 {
     int i;
     int rc = FAILURE;
@@ -201,7 +202,7 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
             if (c->messageHandlers[i].fp != NULL)
             {
                 MessageData md;
-                NewMessageData(&md, topicName, message);
+                NewMessageData(&md, topicName, message, last);
                 c->messageHandlers[i].fp(&md);
                 rc = OK;
             }
@@ -211,7 +212,7 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
     if (rc == FAILURE && c->defaultMessageHandler != NULL)
     {
         MessageData md;
-        NewMessageData(&md, topicName, message);
+        NewMessageData(&md, topicName, message, last);
         c->defaultMessageHandler(&md);
         rc = OK;
     }
@@ -226,7 +227,7 @@ int deliverStreamingMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* m
     }
 
     message->payloadlen -= missing_bytes;
-    int rc = deliverMessage(c, topicName, message);
+    int rc = deliverMessage(c, topicName, message, missing_bytes == 0);
     if (rc != OK) {
         return rc;
     }
@@ -238,7 +239,7 @@ int deliverStreamingMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* m
         rc = c->ipstack->mqttread(c->ipstack, message->payload, size_to_read, TimerLeftMS(timer));
         message->payloadlen = rc;
         missing_bytes -= rc;
-        rc = deliverMessage(c, topicName, message);
+        rc = deliverMessage(c, topicName, message, missing_bytes == 0);
         if (rc != OK) {
             return rc;
         }

@@ -35,6 +35,7 @@
 #endif
 
 #include "MQTTPacket.h"
+#include <stdbool.h>
 
 #if defined(MQTTCLIENT_PLATFORM_HEADER)
 /* The following sequence of macros converts the MQTTCLIENT_PLATFORM_HEADER value
@@ -87,6 +88,7 @@ typedef struct MessageData
 {
     MQTTMessage* message;
     MQTTString* topicName;
+    bool last;
 } MessageData;
 
 typedef struct MQTTConnackData
